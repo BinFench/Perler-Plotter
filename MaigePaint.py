@@ -4,7 +4,7 @@ from pygame.locals import *
 pygame.display.init()
 pygame.font.init()
 
-pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
+#pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
 
 done = False
 
@@ -133,7 +133,7 @@ def drawConfig():
 def drawArt(x, y):
     width = x
     height = y
-    pixelArray = [[None]*y]*x
+    pixelArray = [[None for i in range(width)] for j in range(height)]
     lastArray = []
     lastArray.append(pixelArray)
     colorArray = [(0,0,0),(128,128,128),(255,255,255),(128,0,0),(255,0,0),(0,128,0),(0,255,0),(0,0,128),(0,0,255),(255,128,0),(255,255,0),(255,0,128),(255,0,255),(0,255,128),(0,255,255),(128,255,0),(128,0,255)]
@@ -164,10 +164,31 @@ def drawArt(x, y):
 
         for i in range(20):
             if (20*page + i < len(colorArray)):
-                pygame.draw.rect(screen, colorArray[i], ((570 + 70 * (i % 4), 70 * int(i/4) + 10), (60, 60)))
+                pygame.draw.rect(screen, colorArray[20*page + i], ((570 + 70 * (i % 4), 70 * int(i/4) + 10), (60, 60)))
+
+        for i in range(x):
+            for j in range(y):
+                if (pixelArray[i][j] != None):
+                    pygame.draw.rect(screen, pixelArray[i][j], (((560/x)*i, (400/y)*j), (560/x, 400/y)))
+
+        if (pygame.mouse.get_pressed()[0]):
+            mousex, mousey = pygame.mouse.get_pos()
+            if ((mousex < 560) & (mousey < 400)):
+                held = True
+                (pixelArray[int(mousex/(560/x))])[int(mousey/(400/y))] = currentColor
+                
+            else:
+                if (held == True):
+                    held = False
+                    lastArray.append(pixelArray)
+
+        else:
+            if (held == True):
+                held = False
+                lastArray.append(pixelArray)
 
         pygame.display.flip()
-        pygame.time.delay(17)
+        #pygame.time.delay(17)
     
     plot()
 
