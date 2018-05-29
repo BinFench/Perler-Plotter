@@ -169,14 +169,21 @@ def drawArt(x, y):
         for i in range(x):
             for j in range(y):
                 if (pixelArray[i][j] != None):
-                    pygame.draw.rect(screen, pixelArray[i][j], (((560/x)*i, (400/y)*j), (560/x, 400/y)))
+                    pygame.draw.rect(screen, colorArray[pixelArray[i][j]], (((560/x)*i, (400/y)*j), (560/x, 400/y)))
 
         if (pygame.mouse.get_pressed()[0]):
             mousex, mousey = pygame.mouse.get_pos()
             if ((mousex < 560) & (mousey < 400)):
                 held = True
                 (pixelArray[int(mousex/(560/x))])[int(mousey/(400/y))] = currentColor
-                
+            elif ((mousex > 560) & (mousey < 350)):
+                if (held == True):
+                    held = False
+                    lastArray.append(pixelArray)
+                for i in range(20):
+                    if (((mousex >= 570 + 70 * (i % 4)) and (mousex <= (570 + 70 * (i % 4) + 60)) and (mousey >= 10 + 70 * int(i/4)) and (mousey <= 70 + 70 * int(i/4)))):
+                        if (20*page + i < len(colorArray)):
+                            currentColor = 20*page + i
             else:
                 if (held == True):
                     held = False
