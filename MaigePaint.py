@@ -164,7 +164,7 @@ def drawArt(x, y):
     height = y
 
     #pixelArray is current image, lastArray is all previous edits for undo and redo
-    pixelArray = [[None for i in range(width)] for j in range(height)]
+    pixelArray = [[None for i in range(height)] for j in range(width)] #Pixel coordinates are (x, y)
     lastArray = []
     lastArray.append(deepcopy(pixelArray)) #Deepcopy to remove list pass by reference
 
@@ -234,11 +234,11 @@ def drawArt(x, y):
         screen.blit(text.render("%d x %d" % (width, height), 4, (0, 0, 0)), (200, 415))
         screen.blit(text2.render("redo", 1, (0, 0, 0)), (405, 430))
 
-        for i in range(x):
-            for j in range(y):
+        for i in range(width):
+            for j in range(height):
                 #Drawing perler art
                 if (pixelArray[i][j] != None):
-                    pygame.draw.rect(screen, colorArray[pixelArray[i][j]], (((560/x)*i, (400/y)*j), (560/x, 400/y)))
+                    pygame.draw.rect(screen, colorArray[pixelArray[i][j]], (((560/width)*i, (400/height)*j), (560/width, 400/height)))
 
         if (pygame.mouse.get_pressed()[0]):
             mousex, mousey = pygame.mouse.get_pos()
@@ -247,7 +247,24 @@ def drawArt(x, y):
             if ((mousex < 560) & (mousey < 400)):
                 lastAction = "draw"
                 held = True
-                (pixelArray[int(mousex/(560/x))])[int(mousey/(400/y))] = currentColor
+                (pixelArray[int(mousex/(560/width))])[int(mousey/(400/height))] = currentColor
+
+            elif ((mousex >= 570) & (mousex <= 610) & (mousey >= 360) & (mousey <= 400)):
+                lastAction = "width"
+                if (not held):
+                    width += 1
+                    temp = [None]*height
+                    pixelArray.append(temp)
+                held = True
+
+            elif ((mousex >= 520) & (mousex <= 560) & (mousey >= 410) & (mousey <= 450)):
+                lastAction = "height"
+                if (not held):
+                    for i in range(width):
+                        pixelArray[i].append(None)
+                    height += 1
+                held = True
+                
 
             #Undo button
             elif ((mousex >= 105) & (mousex <= 165) & (mousey >= 410) & (mousey <= 470)):
@@ -257,8 +274,8 @@ def drawArt(x, y):
                     if (indice > 0):
                         indice -= 1
                         newPixelArray = deepcopy(lastArray[indice])
-                        newWidth = len(newPixelArray)
-                        newHeight = len(newPixelArray[0])
+                        width = len(newPixelArray)
+                        height = len(newPixelArray[0])
                         pixelArray = deepcopy(newPixelArray)
                 lastAction = "undo"
 
@@ -270,8 +287,8 @@ def drawArt(x, y):
                     if (indice < maxIndice):
                         indice += 1
                         newPixelArray = deepcopy(lastArray[indice])
-                        newWidth = len(newPixelArray)
-                        newHeight = len(newPixelArray[0])
+                        width = len(newPixelArray)
+                        height = len(newPixelArray[0])
                         pixelArray = deepcopy(newPixelArray)
                 lastAction = "redo"
 
@@ -280,11 +297,23 @@ def drawArt(x, y):
                 if (held == True):
                     #Update state hierarchy (removing redos if applicable)
                     if (lastAction == "draw"):
-                        for i in range(maxIndice - indice):
-                            lastArray.pop()
-                        maxIndice = indice + 1
-                        indice = maxIndice
-                        lastArray.append(deepcopy(pixelArray))
+                        #Checking for updates to perler art
+                        oldWidth = len(lastArray[-1])
+                        oldHeight = len(lastArray[-1][0])
+                        match = True
+                        if (oldWidth != width or oldHeight != height):
+                            match = False
+                        else:
+                            for i in range(width):
+                                for j in range(height):
+                                    if (pixelArray[i][j] != lastArray[-1][i][j]) :
+                                        match = False
+                        if (not match):
+                            for i in range(maxIndice - indice):
+                                lastArray.pop()
+                            maxIndice = indice + 1
+                            indice = maxIndice
+                            lastArray.append(deepcopy(pixelArray))
                     held = False
                     
                 for i in range(20):
@@ -299,12 +328,24 @@ def drawArt(x, y):
                 if (held == True):
                     held = False
                     if (lastAction == "draw"):
-                        #Removing redos, see above
-                        for i in range(maxIndice - indice):
-                            lastArray.pop()
-                        maxIndice = indice + 1
-                        indice += 1
-                        lastArray.append(deepcopy(pixelArray))
+                        #Checking for updates to perler art
+                        oldWidth = len(lastArray[-1])
+                        oldHeight = len(lastArray[-1][0])
+                        match = True
+                        if (oldWidth != width or oldHeight != height):
+                            match = False
+                        else:
+                            for i in range(width):
+                                for j in range(height):
+                                    if (pixelArray[i][j] != lastArray[-1][i][j]) :
+                                        match = False
+                        if (not match):
+                            #Removing redos, see above
+                            for i in range(maxIndice - indice):
+                                lastArray.pop()
+                            maxIndice = indice + 1
+                            indice += 1
+                            lastArray.append(deepcopy(pixelArray))
                 lastAction = "none"
 
         #If touch is released
@@ -312,12 +353,24 @@ def drawArt(x, y):
             if (held == True):
                 held = False
                 if (lastAction == "draw"):
-                    #Removing redos, see above
-                    for i in range(maxIndice - indice):
-                        lastArray.pop()
-                    maxIndice = indice + 1
-                    indice += 1
-                    lastArray.append(deepcopy(pixelArray))
+                    #Checking for updates to perler art
+                    oldWidth = len(lastArray[-1])
+                    oldHeight = len(lastArray[-1][0])
+                    match = True
+                    if (oldWidth != width or oldHeight != height):
+                        match = False
+                    else:
+                        for i in range(width):
+                            for j in range(height):
+                                if (pixelArray[i][j] != lastArray[-1][i][j]) :
+                                    match = False
+                    if (not match):
+                        #Removing redos, see above
+                        for i in range(maxIndice - indice):
+                            lastArray.pop()
+                        maxIndice = indice + 1
+                        indice += 1
+                        lastArray.append(deepcopy(pixelArray))
         pygame.display.flip()
 
     #When drawing is done, send signals to arduino to plot perler beads
