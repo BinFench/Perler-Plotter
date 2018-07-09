@@ -9,8 +9,8 @@ pygame.font.init()
 
 done = False #For main loop conditional
 
-screen = pygame.display.set_mode((0,0), pygame.SRCALPHA)
-pygame.display.toggle_fullscreen()
+screen = pygame.display.set_mode((900,500), pygame.SRCALPHA) #Set to (0,0) for release
+#pygame.display.toggle_fullscreen()
 
 text = pygame.font.SysFont(None, 70)
 text2 = pygame.font.SysFont(None, 30)
@@ -132,6 +132,7 @@ def drawConfig():
             pygame.draw.circle(screen, (255, 255, 255), (345, 210), 30)       #Height - Button
             pygame.draw.circle(screen, (255, 255, 255), (490, 330), 30)       #Width + Button
             pygame.draw.circle(screen, (255, 255, 255), (345, 330), 30)       #Width - Button
+            
             #Screen Text..
             screen.blit(text.render("Input grid dimensions:", 1, (0, 0, 0)), (150, 50))
             screen.blit(text2.render("Height:", 1, (0, 0, 0)), (380, 140))
@@ -152,6 +153,7 @@ def drawConfig():
 def drawArt(x, y):
     #Built in painting program
 
+    eraser = False;
     #Tracks last button pressed.
     lastAction = "none"
 
@@ -193,6 +195,7 @@ def drawArt(x, y):
 
     #Current indice in color page
     page = 0
+    maxPages = 2
 
     while (not nextStage):
         for event in pygame.event.get():
@@ -214,7 +217,8 @@ def drawArt(x, y):
                 pygame.draw.rect(screen, (255, 255, 255), ((16*i, 8 + 16*j), (8, 8)))
 
         #Drawing the current used color in the corner
-        pygame.draw.rect(screen, colorArray[currentColor], ((0, 400), (80,80)))
+        if not eraser:
+            pygame.draw.rect(screen, colorArray[currentColor], ((0, 400), (80,80)))
 
         #Shows currently available colors on page
         for i in range(20):
@@ -227,12 +231,23 @@ def drawArt(x, y):
         pygame.draw.rect(screen, (255,255,255), ((190, 400), (180,80)))#Current grid dimensions
         pygame.draw.rect(screen, (255,255,255), ((105, 410), (60,60))) #Undo button
         pygame.draw.rect(screen, (255,255,255), ((400, 410), (60,60))) #Redo button
+        pygame.draw.rect(screen, (255,255,255), ((570, 410), (60,60))) #Draw button
+        pygame.draw.rect(screen, (255,255,255), ((640, 410), (60,60))) #Erase button
+        pygame.draw.rect(screen, (255,255,255), ((620, 360), (40,40))) #Last page
+        pygame.draw.rect(screen, (255,255,255), ((670, 360), (70,40))) #Current page
+        pygame.draw.rect(screen, (255,255,255), ((750, 360), (40,40))) #Next page
+        
         #Text data..
         screen.blit(text.render("+", 1, (0, 0, 0)), (576, 353))
         screen.blit(text.render("+", 1, (0, 0, 0)), (526, 403))
         screen.blit(text2.render("undo", 1, (0, 0, 0)), (110, 430))
         screen.blit(text.render("%d x %d" % (width, height), 4, (0, 0, 0)), (200, 415))
         screen.blit(text2.render("redo", 1, (0, 0, 0)), (405, 430))
+        screen.blit(text2.render("draw", 1, (0, 0, 0)), (575,430))
+        screen.blit(text2.render("erase", 1, (0, 0, 0)), (645,430))
+        screen.blit(text2.render("<-", 5, (0,0,0)), (630, 370))
+        screen.blit(text2.render("%d / %d" % (page, maxPages), 5, (0,0,0)), (685, 370))
+        screen.blit(text2.render("->", 5, (0,0,0)), (760, 370))
 
         for i in range(width):
             for j in range(height):
@@ -245,9 +260,16 @@ def drawArt(x, y):
 
             #Perler canvas
             if ((mousex < 560) & (mousey < 400)):
-                lastAction = "draw"
-                held = True
-                (pixelArray[int(mousex/(560/width))])[int(mousey/(400/height))] = currentColor
+                if not eraser:
+                    lastAction = "draw"
+                    held = True
+                    if (int(mousex/(560/width)) < width and int(mousey/(400/height)) < height):
+                        (pixelArray[int(mousex/(560/width))])[int(mousey/(400/height))] = currentColor
+                else:
+                    lastAction = "erase"
+                    held = True
+                    if (int(mousex/(560/width)) < width and int(mousey/(400/height)) < height):
+                        (pixelArray[int(mousex/(560/width))])[int(mousey/(400/height))] = None
 
             elif ((mousex >= 570) & (mousex <= 610) & (mousey >= 360) & (mousey <= 400)):
                 lastAction = "width"
@@ -264,7 +286,6 @@ def drawArt(x, y):
                         pixelArray[i].append(None)
                     height += 1
                 held = True
-                
 
             #Undo button
             elif ((mousex >= 105) & (mousex <= 165) & (mousey >= 410) & (mousey <= 470)):
@@ -296,7 +317,7 @@ def drawArt(x, y):
             elif ((mousex > 560) & (mousey < 350)):
                 if (held == True):
                     #Update state hierarchy (removing redos if applicable)
-                    if (lastAction == "draw"):
+                    if ((lastAction == "draw") or (lastAction == "erase")):
                         #Checking for updates to perler art
                         oldWidth = len(lastArray[-1])
                         oldHeight = len(lastArray[-1][0])
@@ -323,11 +344,30 @@ def drawArt(x, y):
                             currentColor = 20*page + i
                 lastAction = "none"
 
+            #Selecting to either draw or erase
+            elif ((mousex >= 570) & (mousex <= 630) & (mousey >= 410) & (mousey <= 470)):
+                eraser = False;
+                
+            elif ((mousex >= 640) & (mousex <= 700) & (mousey >= 410) & (mousey <= 470)):
+                eraser = True;
+
+            elif ((mousex >= 620) & (mousex <= 660) & (mousey >= 360) & (mousey <= 400)):
+                if not held:
+                    if page > 0:
+                        page -= 1
+                    held = True
+
+            elif ((mousex >= 750) & (mousex <= 790) & (mousey >= 360) & (mousey <= 400)):
+                if not held:
+                    if page < maxPages:
+                        page += 1
+                    held = True
+
             #Anything else
             else:
                 if (held == True):
                     held = False
-                    if (lastAction == "draw"):
+                    if ((lastAction == "draw") or (lastAction == "erase")):
                         #Checking for updates to perler art
                         oldWidth = len(lastArray[-1])
                         oldHeight = len(lastArray[-1][0])
@@ -352,7 +392,7 @@ def drawArt(x, y):
         else:
             if (held == True):
                 held = False
-                if (lastAction == "draw"):
+                if ((lastAction == "draw") or (lastAction == "erase")):
                     #Checking for updates to perler art
                     oldWidth = len(lastArray[-1])
                     oldHeight = len(lastArray[-1][0])
